@@ -1,0 +1,121 @@
+C51 COMPILER V9.54   DS1302                                                                07/31/2024 11:04:30 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE DS1302
+OBJECT MODULE PLACED IN .\Objects\DS1302.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE DS1302.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\DS
+                    -1302.lst) TABS(2) OBJECT(.\Objects\DS1302.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          
+   3          sbit DS1302_SCLK = P3^6;
+   4          sbit DS1302_IO = P3^4;
+   5          sbit DS1302_CE = P3^5;
+   6          
+   7          #define DS1302_SECOND    0x80
+   8          #define DS1302_MINUTE    0x82
+   9          #define DS1302_HOUR      0x84
+  10          #define DS1302_DATE      0x86
+  11          #define DS1302_MONTH     0x88
+  12          #define DS1302_DAY       0x8A
+  13          #define DS1302_YEAR      0x8C
+  14          #define DS1302_WP        0x8E//关闭写保护
+  15          
+  16          char DS1302_Time[] = {24, 7, 30, 23, 59, 55, 1};
+  17          
+  18          void DS1302_Init()
+  19          {
+  20   1        DS1302_CE = 0;
+  21   1        DS1302_SCLK = 0;
+  22   1      }
+  23          
+  24          void DS1302_WriteByte(unsigned char Command, Data)
+  25          {
+  26   1        unsigned char i;
+  27   1        DS1302_CE = 1;
+  28   1        for(i=0;i<8;i++)
+  29   1        {
+  30   2          DS1302_IO = Command&0x01<<i;
+  31   2          DS1302_SCLK = 1;
+  32   2          DS1302_SCLK = 0;
+  33   2        }
+  34   1        for(i=0;i<8;i++)
+  35   1        {
+  36   2          DS1302_IO = Data&0x01<<i;
+  37   2          DS1302_SCLK = 1;
+  38   2          DS1302_SCLK = 0;
+  39   2        }
+  40   1        DS1302_CE = 0;
+  41   1      }
+  42          
+  43          unsigned char DS1302_ReadByte(unsigned char Command)
+  44          {
+  45   1        unsigned char i, Data=0x00;
+  46   1        Command |= 0x01;//写指令转换为读指令
+  47   1        DS1302_CE = 1;
+  48   1        for(i=0;i<8;i++)
+  49   1        {
+  50   2          DS1302_IO = Command&(0x01<<i);
+  51   2          DS1302_SCLK = 0;
+  52   2          DS1302_SCLK = 1;
+  53   2        }
+  54   1        for(i=0;i<8;i++)
+C51 COMPILER V9.54   DS1302                                                                07/31/2024 11:04:30 PAGE 2   
+
+  55   1        {
+  56   2          DS1302_SCLK = 1;
+  57   2          DS1302_SCLK = 0;
+  58   2          if(DS1302_IO){Data|=(0x01<<i);}
+  59   2        }
+  60   1        DS1302_CE = 0;
+  61   1        DS1302_IO = 0;
+  62   1        return Data;
+  63   1      }
+  64          
+  65          void DS1302_SetTime(void)
+  66          {
+  67   1        DS1302_WriteByte(DS1302_WP,0x00);//关闭写保护
+  68   1        DS1302_WriteByte(DS1302_YEAR,DS1302_Time[0]/10*16+DS1302_Time[0]%10);
+  69   1        DS1302_WriteByte(DS1302_MONTH,DS1302_Time[1]/10*16+DS1302_Time[1]%10);
+  70   1        DS1302_WriteByte(DS1302_DATE,DS1302_Time[2]/10*16+DS1302_Time[2]%10);
+  71   1        DS1302_WriteByte(DS1302_HOUR,DS1302_Time[3]/10*16+DS1302_Time[3]%10);
+  72   1        DS1302_WriteByte(DS1302_MINUTE,DS1302_Time[4]/10*16+DS1302_Time[4]%10);
+  73   1        DS1302_WriteByte(DS1302_SECOND,DS1302_Time[5]/10*16+DS1302_Time[5]%10);
+  74   1        DS1302_WriteByte(DS1302_DAY,DS1302_Time[6]/10*16+DS1302_Time[6]%10);
+  75   1        DS1302_WriteByte(DS1302_WP,0x80);//打开写保护
+  76   1      }
+  77          
+  78          void DS1302_ReadTime(void)
+  79          {
+  80   1        unsigned char Temp;
+  81   1        Temp=DS1302_ReadByte(DS1302_YEAR);
+  82   1        DS1302_Time[0]=Temp/16*10+Temp%16;
+  83   1        Temp=DS1302_ReadByte(DS1302_MONTH);
+  84   1        DS1302_Time[1]=Temp/16*10+Temp%16;
+  85   1        Temp=DS1302_ReadByte(DS1302_DATE);
+  86   1        DS1302_Time[2]=Temp/16*10+Temp%16;
+  87   1        Temp=DS1302_ReadByte(DS1302_HOUR);
+  88   1        DS1302_Time[3]=Temp/16*10+Temp%16;
+  89   1        Temp=DS1302_ReadByte(DS1302_MINUTE);
+  90   1        DS1302_Time[4]=Temp/16*10+Temp%16;
+  91   1        Temp=DS1302_ReadByte(DS1302_SECOND);
+  92   1        DS1302_Time[5]=Temp/16*10+Temp%16;
+  93   1        Temp=DS1302_ReadByte(DS1302_DAY);
+  94   1        DS1302_Time[6]=Temp/16*10+Temp%16;
+  95   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    694    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
